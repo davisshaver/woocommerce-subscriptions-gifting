@@ -69,12 +69,8 @@ class WCSG_Recipient_Details {
 	 * @param $default_path
 	 */
 	public static function add_new_customer_template( $located, $template_name, $args, $template_path, $default_path ) {
-		global $wp;
-		$current_user_id = get_current_user_id();
-		if ( 'true' === get_user_meta( $current_user_id, 'wcsg_update_account', true ) ) {
-			if ( 'myaccount/my-account.php' == $template_name && isset( $wp->query_vars['new-recipient-account'] ) ) {
-				$located = wc_locate_template( 'new-recipient-account.php', $template_path, plugin_dir_path( WCS_Gifting::$plugin_file ) . 'templates/' );
-			}
+		if ( 'myaccount/my-account.php' === $template_name && self::is_recipient_details_page() && 'true' === get_user_meta( get_current_user_id(), 'wcsg_update_account', true ) ) {
+			$located = wc_locate_template( 'new-recipient-account.php', $template_path, plugin_dir_path( WCS_Gifting::$plugin_file ) . 'templates/' );
 		}
 		return $located;
 	}
