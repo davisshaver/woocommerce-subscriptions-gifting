@@ -12,7 +12,67 @@ class WCSG_Recipient_Details {
 	public static function init() {
 		add_filter( 'template_redirect', __CLASS__ . '::update_recipient_details', 1 );
 		add_action( 'template_redirect',  __CLASS__ . '::my_account_template_redirect' );
-		add_filter( 'wc_get_template', __CLASS__ . '::add_new_customer_template', 10, 5 );
+
+		if ( wcsg_is_woocommerce_pre( '2.6' ) ) {
+			add_filter( 'wc_get_template', array( __CLASS__, 'add_new_customer_template' ), 10, 5 );
+		} else {
+			add_filter( 'woocommerce_enqueue_styles', array( __CLASS__, 'maybe_enqueue_styles' ), 15 );
+			add_action( 'woocommerce_account_navigation', array( __CLASS__, 'maybe_remove_account_navigation' ), 5 );
+			add_action( 'woocommerce_account_new-recipient-account_endpoint', array( __CLASS__, 'get_new_customer_template' ) );
+		}
+	}
+
+	/**
+	 * Determines if the current page is the recipient details page.
+	 *
+	 * @return boolean Whether the current page is the recipient details page or not.
+	 * @since 2.0.0
+	 */
+	private static function is_recipient_details_page() {
+		global $wp;
+
+		return isset( $wp->query_vars['new-recipient-account'] );
+	}
+
+	/**
+	 * Enqueue the style sheet required for the recipient details page.
+	 *
+	 * @param  array $styles The list of styles being enqueued.
+	 * @return array $styles
+	 * @since 2.0.0
+	 */
+	public static function maybe_enqueue_styles( $styles ) {
+
+		if ( self::is_recipient_details_page() ) {
+			$styles['wcsg-new-recipient-account-details'] = array(
+				'src'     => plugins_url( 'css/new-recipient-account-details.css', WCS_Gifting::$plugin_file ),
+				'deps'    => '',
+				'version' => '',
+				'media'   => 'all',
+			);
+		}
+
+		return $styles;
+	}
+
+	/**
+	 * Remove the My Account navigation menu when displaying the recipient details page.
+	 *
+	 * @since 2.0.0
+	 */
+	public static function maybe_remove_account_navigation() {
+		if ( self::is_recipient_details_page() ) {
+			remove_action( 'woocommerce_account_navigation', 'woocommerce_account_navigation' );
+		}
+	}
+
+	/**
+	 * Get the new-recipient-account template
+	 *
+	 * @since 2.0.0
+	 */
+	public static function get_new_customer_template() {
+		wc_get_template( 'new-recipient-account.php', array(), '', plugin_dir_path( WCS_Gifting::$plugin_file ) . 'templates/' );
 	}
 
 	/**
