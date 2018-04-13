@@ -12,7 +12,52 @@ class WCSG_Recipient_Details {
 	public static function init() {
 		add_filter( 'template_redirect', __CLASS__ . '::update_recipient_details', 1 );
 		add_action( 'template_redirect',  __CLASS__ . '::my_account_template_redirect' );
-		add_filter( 'wc_get_template', __CLASS__ . '::add_new_customer_template', 10, 5 );
+
+		if ( wcsg_is_woocommerce_pre( '2.6' ) ) {
+			add_filter( 'wc_get_template', array( __CLASS__, 'add_new_customer_template' ), 10, 5 );
+		} else {
+			add_filter( 'wc_get_template', array( __CLASS__, 'get_new_recipient_account_container' ), 10, 4 );
+			add_action( 'woocommerce_account_new-recipient-account_endpoint', array( __CLASS__, 'get_new_customer_template' ) );
+		}
+	}
+
+	/**
+	 * Determines if the current page is the recipient details page.
+	 *
+	 * @return boolean Whether the current page is the recipient details page or not.
+	 * @since 2.0.0
+	 */
+	private static function is_recipient_details_page() {
+		global $wp;
+
+		return isset( $wp->query_vars['new-recipient-account'] );
+	}
+
+	/**
+	 * Override the core My Account base template and display a full-width template if we're displaying the Recipient Details page.
+	 *
+	 * @param string $located Path to template
+	 * @param string $template_name The template's name.
+	 * @param array  $args An array of arguments used in the template.
+	 * @param string $template_path Path for including template.
+	 * @return string Path to template.
+	 * @since 2.0.0
+	 */
+	public static function get_new_recipient_account_container( $located, $template_name, $args, $template_path ) {
+		if ( 'myaccount/my-account.php' === $template_name && self::is_recipient_details_page() ) {
+			$located = wc_locate_template( 'recipient-details-my-account.php', $template_path, plugin_dir_path( WCS_Gifting::$plugin_file ) . 'templates/' );
+		}
+
+		return $located;
+	}
+
+	/**
+	 * Get the new-recipient-account template
+	 *
+	 * @since 2.0.0
+	 */
+	public static function get_new_customer_template() {
+		wc_get_template( 'new-recipient-account.php', array(), '', plugin_dir_path( WCS_Gifting::$plugin_file ) . 'templates/' );
 	}
 
 	/**
