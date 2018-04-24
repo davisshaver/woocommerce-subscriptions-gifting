@@ -1,0 +1,6 @@
+
+{
+  "name": "davisshaver/woocommerce-subscriptions-gifting",
+  "description": "Composer wrapper for plugin",
+  "type": "wordpress-plugin"
+}
